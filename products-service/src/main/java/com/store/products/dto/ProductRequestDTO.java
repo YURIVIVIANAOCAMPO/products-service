@@ -29,4 +29,6 @@ public class ProductRequestDTO {
 
     @NotNull(message = "Status is required")
     private ProductStatus status;
+
+    private Integer initialStock;
 }

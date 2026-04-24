@@ -53,6 +53,10 @@ public class ProductService {
         Product product = java.util.Objects.requireNonNull(productMapper.toEntity(requestDTO), "Product entity cannot be null");
         Product savedProduct = productRepository.saveAndFlush(product);
 
+        if (requestDTO.getInitialStock() != null && requestDTO.getInitialStock() > 0) {
+            inventoryClient.initializeStock(savedProduct.getId(), requestDTO.getInitialStock());
+        }
+
         return productMapper.toDTO(savedProduct);
     }
 

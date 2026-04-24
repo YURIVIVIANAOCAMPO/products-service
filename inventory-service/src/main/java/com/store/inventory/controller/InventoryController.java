@@ -23,6 +23,14 @@ public class InventoryController {
         return ResponseEntity.ok(Map.of("productId", productId, "available", available));
     }
 
+    @PutMapping("/{productId}/stock")
+    public ResponseEntity<Void> initializeStock(
+            @PathVariable @NonNull UUID productId,
+            @RequestParam @NonNull Integer quantity) {
+        inventoryService.initializeStock(productId, quantity);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/purchases")
     public ResponseEntity<Map<String, String>> purchase(
             @Valid @RequestBody PurchaseRequestDTO request,

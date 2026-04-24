@@ -63,6 +63,14 @@ public class InventoryClient {
         return true;
     }
 
+    @Retry(name = "inventoryService")
+    public void initializeStock(UUID productId, int quantity) {
+        restClient.put()
+                .uri("/inventory/{productId}/stock?quantity={quantity}", productId, quantity)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
     public boolean deductStockFallback(UUID productId, int quantity, String idempotencyKey, Throwable t) {
         return false;
     }

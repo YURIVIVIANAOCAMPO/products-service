@@ -30,6 +30,20 @@ public class InventoryService {
     }
 
     @Transactional
+    public void initializeStock(UUID productId, Integer quantity) {
+        Inventory inventory = inventoryRepository.findById(productId)
+                .orElse(Inventory.builder()
+                        .productId(productId)
+                        .available(0)
+                        .version(0L)
+                        .build());
+        
+        inventory.setAvailable(inventory.getAvailable() + quantity);
+        inventoryRepository.save(inventory);
+        log.info("InventoryInitialized: Product {} initial stock set to {}", productId, inventory.getAvailable());
+    }
+
+    @Transactional
     public void purchase(PurchaseRequestDTO request, String idempotencyKey) {
         // 1. Validate Idempotency
         if (idempotencyKey != null && idempotencyKeyRepository.existsById(idempotencyKey)) {
