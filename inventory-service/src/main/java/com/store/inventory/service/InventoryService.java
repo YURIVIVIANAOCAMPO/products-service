@@ -21,6 +21,7 @@ public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
     private final IdempotencyKeyRepository idempotencyKeyRepository;
+    private final ProductsClient productsClient;
 
     @Transactional(readOnly = true)
     public Integer getAvailableStock(UUID productId) {
@@ -41,6 +42,9 @@ public class InventoryService {
         inventory.setAvailable(inventory.getAvailable() + quantity);
         inventoryRepository.save(inventory);
         log.info("InventoryInitialized: Product {} initial stock set to {}", productId, inventory.getAvailable());
+        
+        // Sync status back to Products Service
+        productsClient.syncStatus(productId, inventory.getAvailable());
     }
 
     @Transactional
@@ -73,5 +77,8 @@ public class InventoryService {
 
         // 5. Log Event (Required by tech test)
         log.info("InventoryChanged: Product {} new available stock is {}", inventory.getProductId(), inventory.getAvailable());
+        
+        // 6. Sync status back to Products Service
+        productsClient.syncStatus(inventory.getProductId(), inventory.getAvailable());
     }
 }

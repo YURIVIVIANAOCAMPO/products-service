@@ -1,7 +1,17 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic",
+    "java.project.importHint": "whenEmpty",
     "java.configuration.updateBuildConfiguration": "automatic",
     "java.import.maven.enabled": true,
-    "java.project.importHint": "all",
-    "maven.executable.path": "./mvnw"
+    "java.project.resourceFilters": [
+        "node_modules",
+        ".git"
+    ],
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-22",
+            "path": "C:\\Program Files\\Java\\jdk-22",
+            "default": true
+        }
+    ],
+    "java.compile.nullAnalysis.mode": "automatic"
 }

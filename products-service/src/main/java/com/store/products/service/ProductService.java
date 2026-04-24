@@ -3,6 +3,7 @@ package com.store.products.service;
 import com.store.products.dto.ProductRequestDTO;
 import com.store.products.dto.ProductResponseDTO;
 import com.store.products.entity.Product;
+import com.store.products.entity.ProductStatus;
 import com.store.products.exception.DuplicateResourceException;
 import com.store.products.exception.InsufficientStockException;
 import com.store.products.exception.ResourceNotFoundException;
@@ -104,6 +105,19 @@ public class ProductService {
             throw new ResourceNotFoundException("Product not found with id: " + id);
         }
         productRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void updateProductStatus(@NonNull UUID id, int stock) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        
+        ProductStatus newStatus = (stock > 0) ? ProductStatus.ACTIVE : ProductStatus.INACTIVE;
+        
+        if (product.getStatus() != newStatus) {
+            product.setStatus(newStatus);
+            productRepository.save(product);
+        }
     }
 
     private void validateSkuUniqueness(String sku) {

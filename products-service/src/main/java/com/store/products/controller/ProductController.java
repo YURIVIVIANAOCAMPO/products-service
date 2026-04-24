@@ -57,6 +57,14 @@ public class ProductController {
         return ResponseEntity.ok(new ResponseWrapper<>(productService.updateProduct(id, requestDTO)));
     }
 
+    @PatchMapping("/{id}/sync-status")
+    public ResponseEntity<Void> syncStatus(
+            @PathVariable @NonNull UUID id,
+            @RequestParam int stock) {
+        productService.updateProductStatus(id, stock);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable @NonNull UUID id) {
         productService.deleteProduct(id);

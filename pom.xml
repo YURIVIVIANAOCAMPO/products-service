@@ -11,7 +11,7 @@
 	</parent>
 
 	<groupId>com.store</groupId>
-	<artifactId>store-parent</artifactId>
+	<artifactId>store-microservices-parent</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
