@@ -46,7 +46,7 @@ La solución se compone de dos módulos independientes que interactúan mediante
 ## Documentación Técnica Avanzada
 Para una comprensión profunda de las decisiones de diseño y el cumplimiento de los requisitos de la prueba técnica, consulte los siguientes documentos:
 *   [Arquitectura del Sistema (Diagrama C4)](./docs/architecture_diagram.md)
-*   [Decisiones Técnicas (Concurrencia, Resiliencia e Idempotencia)](./docs/technical_decisions.md)
+*   [Decisiones Técnicas (Concurrencia, Resiliencia e Idempotencia)](./docs/Technical_Decisions.md)
 *   [Evidencia de Ejecución de Pruebas](./docs/test_evidence.md)
 
 ## Ejecución con Docker Compose
