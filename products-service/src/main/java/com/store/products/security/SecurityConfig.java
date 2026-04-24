@@ -46,6 +46,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/**", "/error").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/products/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/products/*/purchase").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
