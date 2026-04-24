@@ -43,17 +43,54 @@ La solución se compone de dos módulos independientes que interactúan mediante
     *   Products Service: `http://localhost:8080/swagger-ui.html`
     *   Inventory Service: `http://localhost:8081/swagger-ui.html`
 
-## Despliegue en Entornos de Producción (Render)
+## Documentación Técnica Avanzada
+Para una comprensión profunda de las decisiones de diseño y el cumplimiento de los requisitos de la prueba técnica, consulte los siguientes documentos:
+*   [Arquitectura del Sistema (Diagrama C4)](./docs/architecture_diagram.md)
+*   [Decisiones Técnicas (Concurrencia, Resiliencia e Idempotencia)](./docs/technical_decisions.md)
+*   [Evidencia de Ejecución de Pruebas](./docs/test_evidence.md)
 
-Se ha seleccionado la plataforma Render para el alojamiento del backend basándose en los siguientes criterios técnicos:
-*   **Eficiencia de Costos:** Utilización de la capa gratuita para despliegues Dockerizados sin inversión inicial.
-*   **Gestión de Recursos:** Optimización del uso de memoria mediante la configuración del flag `-Xmx384m` en los archivos Dockerfile, garantizando estabilidad dentro de los límites de 512 MB de la instancia.
-*   **Base de Datos Gestionada:** Implementación de PostgreSQL 18.3 en infraestructura Cloud.
+## Ejecución con Docker Compose
+El sistema puede desplegarse íntegramente (Base de Datos + Microservicios) mediante la orquestación de Docker:
+
+```bash
+docker-compose up --build
+```
+*Nota: Asegúrese de tener Docker Desktop instalado y en ejecución.*
+
+## Ejemplos de Interacción (CURL)
+
+### Autenticación (Obtención de JWT)
+```bash
+curl -X POST http://localhost:8080/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"username": "admin", "password": "admin"}'
+```
+
+### Consultar Inventario (Uso de API Key interna)
+```bash
+curl -X GET http://localhost:8081/inventory/{productId} \
+     -H "x-api-key: inventory-secret-key"
+```
+
+### Ejecutar Compra (Idempotencia con Idempotency-Key)
+```bash
+curl -X POST http://localhost:8080/products/{productId}/purchase \
+     -H "Content-Type: application/json" \
+     -H "Idempotency-Key: trx-uuid-001" \
+     -d '{"quantity": 1}'
+```
+
+## Despliegue en Entornos de Producción (Render)
+Se ha seleccionado la plataforma Render basándose en los siguientes criterios técnicos:
+*   **Eficiencia de Costos:** Utilización de la capa gratuita para despliegues Dockerizados.
+*   **Gestión de Recursos:** Optimización de memoria mediante `-Xmx384m` para operar con estabilidad en límites de 512 MB.
+*   **Base de Datos:** PostgreSQL 18.3 Cloud.
 
 ## Configuración de Seguridad y CORS
-El sistema restringe las peticiones cross-origin únicamente a los siguientes dominios autorizados:
-*   `http://localhost:5173` (Entorno de Desarrollo)
-*   `https://*.vercel.app` (Entorno de Producción)
+El sistema autoriza peticiones cross-origin únicamente para:
+*   `http://localhost:5173` (Desarrollo)
+*   `https://*.vercel.app` (Producción en Vercel)
 
 ---
 *StoreMaster Enterprise - Documentación Técnica Oficial.*
+

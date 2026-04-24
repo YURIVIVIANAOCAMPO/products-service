@@ -1,30 +1,28 @@
-# Decisiones Técnicas
+# Decisiones Técnicas y Arquitectura - StoreMaster
 
-Este documento detalla las decisiones clave de arquitectura y diseño aplicadas durante el desarrollo de la prueba técnica.
+Este documento detalla las justificaciones técnicas y estrategias de implementación utilizadas para cumplir con los requisitos de la prueba técnica.
 
-## 1. Clean Architecture y Patrón Multicapa
-El proyecto se estructuró dividiendo responsabilidades estrictas:
-- **Controllers**: Solo manejan HTTP (Request/Response) y validaciones de entrada (`@Valid`).
-- **Services**: Contienen toda la lógica de negocio (validar duplicados, lógica de compra).
-- **Repositories**: Exclusivamente para persistencia (Spring Data JPA).
-- **DTOs & Mappers**: Se implementó un mapeador estricto (`ProductMapper`) para aislar la capa de persistencia (`Entity`) del exterior. Nunca se exponen las entidades en las respuestas de la API.
+## 1. Estrategia de Concurrencia (Optimistic Locking)
+Para evitar que dos compras simultáneas dejen el stock en negativo, se implementó **Optimistic Locking** mediante la anotación `@Version` de JPA en la entidad `Inventory`.
+*   **Funcionamiento:** Cada registro tiene una versión. Si dos transacciones intentan actualizar el mismo registro, la segunda fallará con una `ObjectOptimisticLockingFailureException` al detectar que la versión ya cambió, garantizando la integridad de los datos sin bloquear la base de datos (Pessimistic Locking).
 
-## 2. Base de Datos (PostgreSQL)
-- Se eligió **PostgreSQL** por ser un motor relacional robusto que asegura propiedades ACID (Atomicidad, Consistencia, Aislamiento y Durabilidad).
-- Ideal para el manejo de inventarios e información transaccional donde la integridad de los datos es vital (ej. consistencia de precios).
+## 2. Idempotencia
+El servicio de inventario garantiza la idempotencia en el endpoint `/purchases` mediante el encabezado `Idempotency-Key`.
+*   **Mecanismo:** Se utiliza una tabla de base de datos para registrar cada llave procesada. Si llega una petición con una llave existente, el sistema retorna el resultado previo en lugar de procesar el descuento de nuevo.
 
-## 3. Resiliencia (Plus Senior)
-- Para la comunicación con el `InventoryService` (usando `RestClient`), se implementó la librería **Resilience4j**.
-- Se configuró el patrón **Retry** (`@Retry`). En un ambiente de microservicios, las caídas momentáneas de red son comunes. Con esto aseguramos que si el servicio de inventario falla o sufre un timeout, el `products-service` reintentará la petición automáticamente 3 veces (esperando 2 segundos) antes de rendirse y lanzar una excepción al cliente.
+## 3. Resiliencia y Tolerancia a Fallos
+Se utiliza **Resilience4j** para proteger la comunicación entre microservicios:
+*   **Circuit Breaker:** Si el servicio de Inventario cae, el servicio de Productos entra en "estado abierto" y retorna un valor por defecto (o error controlado) inmediatamente, evitando cascadas de fallos.
+*   **Retry:** Se configuraron reintentos automáticos para fallos transitorios de red.
+*   **Timeouts:** Configuración estricta de 5 segundos para evitar que hilos se queden bloqueados esperando servicios lentos.
 
-## 4. Pruebas Automatizadas (Testing Strategy)
-- **Unitarias:** Mockito se usó para asegurar que la lógica pura del `ProductService` funcione correctamente.
-- **Integración:** En lugar de mocks o una BD en memoria H2, se implementó **Testcontainers**. Esto asegura que las pruebas corran contra una instancia de PostgreSQL real efímera, detectando posibles incompatibilidades de drivers o SQL específico de la BD.
-- **Contract Tests:** Se incluyó un setup de **Pact** (`InventoryClientPactTest`) asumiendo el rol de Consumer. Esto nos asegura que el microservicio de inventarios nunca rompa el contrato esperado (JSON) cuando decidan actualizarlo.
+## 4. Comunicación y Eventos
+*   **Sincronización:** Cuando el inventario cambia, el servicio emite un log estructurado `InventoryChanged` con el `correlation-id` de la petición.
+*   **Sincronización de Estado:** El servicio de Inventario notifica al de Productos mediante una llamada REST protegida para actualizar el estado `ACTIVE/INACTIVE` del producto basado en el stock real.
 
-## 5. Manejo Centralizado de Errores
-- Se implementó un `@RestControllerAdvice` (`GlobalExceptionHandler`). 
-- **Ventaja:** Evita repetir bloques `try/catch` en los controladores y estandariza los códigos de error HTTP de salida:
-  - `404 Not Found`: Si el UUID de producto no existe.
-  - `409 Conflict`: Si el SKU está duplicado.
-  - `422 Unprocessable Entity`: Si los datos enviados fallan validación o no hay stock.
+## 5. Observabilidad
+*   **Correlation ID:** Todas las peticiones generan un ID único que viaja a través de los microservicios en los encabezados, permitiendo trazabilidad completa en los logs.
+*   **Health Checks:** Disponibles en `/actuator/health` para monitoreo de Liveness y Readiness.
+
+---
+*Documentación generada para la Evaluación Técnica de StoreMaster.*
