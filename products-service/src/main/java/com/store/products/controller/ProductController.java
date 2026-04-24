@@ -132,12 +132,11 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Product not found")
         }
     )
-    @PostMapping("/{id}/purchase")
+    @PostMapping(value = "/{id}/purchase", consumes = org.springframework.http.MediaType.ALL_VALUE)
     public ResponseEntity<ResponseWrapper<String>> purchaseProduct(
             @PathVariable @NonNull UUID id,
-            @RequestBody Map<String, Integer> request,
+            @RequestParam(defaultValue = "1") int quantity,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
-        int quantity = request.getOrDefault("quantity", 1);
         productService.purchaseProduct(id, quantity, idempotencyKey);
         return ResponseEntity.ok(new ResponseWrapper<>("Purchase successful"));
     }
