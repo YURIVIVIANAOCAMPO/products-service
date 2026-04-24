@@ -7,14 +7,11 @@ import com.store.products.dto.ResponseWrapper;
 import com.store.products.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
@@ -60,8 +57,8 @@ public class ProductController {
             @RequestParam(required = false) String search,
             @Parameter(description = "Filter by product status (ACTIVE, INACTIVE)")
             @RequestParam(required = false) com.store.products.entity.ProductStatus status,
-            @org.springdoc.core.annotations.ParameterObject @org.springframework.data.web.PageableDefault(page = 0, size = 10) org.springframework.data.domain.Pageable pageable) {
-        return ResponseEntity.ok(new ResponseWrapper<>(productService.listProducts(search, status, pageable)));
+            @org.springdoc.core.annotations.ParameterObject @org.springframework.data.web.PageableDefault(page = 0, size = 10) @org.springframework.lang.NonNull org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(new ResponseWrapper<>(productService.listProducts(search, status, java.util.Objects.requireNonNull(pageable))));
     }
 
     @Operation(

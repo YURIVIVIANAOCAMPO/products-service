@@ -24,14 +24,14 @@ public class InventoryService {
     private final ProductsClient productsClient;
 
     @Transactional(readOnly = true)
-    public Integer getAvailableStock(UUID productId) {
+    public Integer getAvailableStock(@org.springframework.lang.NonNull UUID productId) {
         return inventoryRepository.findById(productId)
                 .map(Inventory::getAvailable)
                 .orElse(0);
     }
 
     @Transactional
-    public void initializeStock(UUID productId, Integer quantity) {
+    public void initializeStock(@org.springframework.lang.NonNull UUID productId, Integer quantity) {
         Inventory inventory = inventoryRepository.findById(productId)
                 .orElse(Inventory.builder()
                         .productId(productId)
@@ -39,8 +39,8 @@ public class InventoryService {
                         .version(0L)
                         .build());
         
-        inventory.setAvailable(inventory.getAvailable() + quantity);
-        inventoryRepository.save(inventory);
+        inventory.setAvailable(inventory.getAvailable() + (quantity != null ? quantity : 0));
+        inventoryRepository.save(java.util.Objects.requireNonNull(inventory));
         log.info("InventoryInitialized: Product {} initial stock set to {}", productId, inventory.getAvailable());
         
         // Sync status back to Products Service
@@ -56,11 +56,12 @@ public class InventoryService {
         }
 
         // 2. Fetch and Validate Stock
-        Inventory inventory = inventoryRepository.findById(request.getProductId())
+        UUID productId = java.util.Objects.requireNonNull(request.getProductId(), "Product ID cannot be null");
+        Inventory inventory = inventoryRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product inventory not found"));
 
         if (inventory.getAvailable() < request.getQuantity()) {
-            throw new InsufficientStockException("Insufficient stock for product: " + request.getProductId());
+            throw new InsufficientStockException("Insufficient stock for product: " + productId);
         }
 
         // 3. Deduct Stock (Optimistic Locking will be handled by @Version)
@@ -69,16 +70,17 @@ public class InventoryService {
 
         // 4. Save Idempotency Key
         if (idempotencyKey != null) {
-            idempotencyKeyRepository.save(IdempotencyKey.builder()
+            IdempotencyKey key = IdempotencyKey.builder()
                     .idempotencyKey(idempotencyKey)
                     .createdAt(LocalDateTime.now())
-                    .build());
+                    .build();
+            idempotencyKeyRepository.save(java.util.Objects.requireNonNull(key));
         }
 
         // 5. Log Event (Required by tech test)
         log.info("InventoryChanged: Product {} new available stock is {}", inventory.getProductId(), inventory.getAvailable());
         
         // 6. Sync status back to Products Service
-        productsClient.syncStatus(inventory.getProductId(), inventory.getAvailable());
+        productsClient.syncStatus(java.util.Objects.requireNonNull(inventory.getProductId()), inventory.getAvailable());
     }
 }
