@@ -21,4 +21,4 @@ COPY --from=build /app/inventory-service/target/*.jar app.jar
 # Configuración de puerto por defecto de Render
 EXPOSE 8081
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xmx384m", "-jar", "app.jar"]
