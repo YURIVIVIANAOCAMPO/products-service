@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "products-service"
+		},
+		{
+			"path": "inventory-service"
+		}
+	],
+	"settings": {
+		"java.project.importHint": "all",
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"java.import.maven.enabled": true
+	}
+}
