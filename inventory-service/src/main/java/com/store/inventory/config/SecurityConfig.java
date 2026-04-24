@@ -33,6 +33,8 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/**", "/error").permitAll()
                 .anyRequest().authenticated()
             )
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
             .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class)
             .cors(Customizer.withDefaults());
 

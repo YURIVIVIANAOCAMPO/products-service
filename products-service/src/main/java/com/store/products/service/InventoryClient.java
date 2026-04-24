@@ -17,16 +17,18 @@ public class InventoryClient {
 
     private final RestClient restClient;
 
-    public InventoryClient(@Value("${inventory.service.url:http://localhost:8081}") @NonNull String baseUrl,
-                           @Value("${security.api-key:inventory-secret-key}") String apiKey) {
-        log.info("Initializing InventoryClient with URL: {} and API Key present: {}", baseUrl, (apiKey != null && !apiKey.isEmpty()));
+    public InventoryClient(@Value("${INVENTORY_SERVICE_URL:http://localhost:8081}") @NonNull String baseUrl,
+                           @Value("${INVENTORY_API_KEY:inventory-secret-key}") String apiKey) {
+        // Sanitize URL to remove trailing slash if present
+        String sanitizedUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        log.info("Initializing InventoryClient with URL: {} and API Key present: {}", sanitizedUrl, (apiKey != null && !apiKey.isEmpty()));
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(3000);
-        factory.setReadTimeout(3000);
+        factory.setConnectTimeout(5000); // Aumentamos timeout a 5s por el Cold Start de Render
+        factory.setReadTimeout(5000);
 
         this.restClient = RestClient.builder()
                 .requestFactory(factory)
-                .baseUrl(baseUrl)
+                .baseUrl(sanitizedUrl)
                 .defaultHeader("x-api-key", apiKey)
                 .build();
     }
