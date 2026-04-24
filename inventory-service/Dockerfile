@@ -2,11 +2,15 @@
 FROM maven:3.9.6-eclipse-temurin-22-jammy AS build
 WORKDIR /app
 
-# Copiamos el POM padre y la carpeta del servicio
+# Copiamos TODOS los poms para que Maven no se queje
 COPY pom.xml .
-COPY inventory-service ./inventory-service
+COPY inventory-service/pom.xml ./inventory-service/
+COPY products-service/pom.xml ./products-service/
 
-# Compilamos el servicio específico
+# Copiamos solo el código fuente del inventario
+COPY inventory-service/src ./inventory-service/src
+
+# Compilamos
 RUN mvn clean package -pl inventory-service -am -DskipTests
 
 # Etapa 2: Imagen de ejecución
