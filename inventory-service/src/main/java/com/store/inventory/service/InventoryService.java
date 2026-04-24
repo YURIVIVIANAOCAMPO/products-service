@@ -36,7 +36,6 @@ public class InventoryService {
                 .orElse(Inventory.builder()
                         .productId(productId)
                         .available(0)
-                        .version(0L)
                         .build());
         
         inventory.setAvailable(inventory.getAvailable() + (quantity != null ? quantity : 0));
