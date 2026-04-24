@@ -2,11 +2,11 @@
 
 Este ecosistema está compuesto por dos microservicios diseñados bajo estándares **Senior** para una tienda escalable.
 
-## 🚀 Arquitectura
+## Arquitectura
 1.  **Products Service (Puerto 8080)**: Gestión de catálogo y autenticación (JWT).
 2.  **Inventory Service (Puerto 8081)**: Gestión de stock físico y compras con control de concurrencia.
 
-## 🛠️ Cómo Correr el Proyecto
+## Cómo Correr el Proyecto
 
 ### Requisitos
 - Docker y Docker Compose instalados.
@@ -24,7 +24,7 @@ Esto levantará:
 
 ---
 
-## 🔐 Seguridad y Autenticación
+## Seguridad y Autenticación
 
 ### Comunicación Inter-Servicios (API Key)
 Los servicios se comunican usando el header `x-api-key`.
@@ -36,7 +36,7 @@ El `products-service` emite tokens JWT para el frontend.
 
 ---
 
-## 📦 Uso de la API (Endpoints Principales)
+## Uso de la API (Endpoints Principales)
 
 ### 1. Comprar un Producto
 Para realizar una compra segura (idempotente y protegida contra concurrencia):
@@ -55,7 +55,7 @@ curl http://localhost:8080/products
 
 ---
 
-## 🧪 Pruebas y Calidad
+## Pruebas y Calidad
 Ambos servicios cuentan con pruebas de integración usando **Testcontainers**.
 Para ejecutar pruebas en un servicio específico:
 ```bash
@@ -66,6 +66,6 @@ cd inventory-service && ./mvnw test
 
 ---
 
-## 📁 Documentación Técnica
+## Documentación Técnica
 - [Decisiones Técnicas (Concurrencia, Idempotencia, Resiliencia)](products-service/docs/Technical_Decisions.md)
 - [Diagrama de Arquitectura](products-service/docs/Architecture.md)
