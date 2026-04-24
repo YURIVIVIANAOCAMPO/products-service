@@ -2,7 +2,6 @@ package com.store.products.controller;
 
 import com.store.products.dto.ProductRequestDTO;
 import com.store.products.dto.ProductResponseDTO;
-import com.store.products.dto.PurchaseRequestDTO;
 import com.store.products.dto.ResponseWrapper;
 import com.store.products.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -76,24 +76,7 @@ public class ProductController {
         return ResponseEntity.ok(new ResponseWrapper<>(productService.getProductById(id)));
     }
 
-    @Operation(
-        summary = "Purchase a product",
-        description = "Initiates a purchase for a specific product. This operation deducts stock from the inventory service using an internal idempotency key to prevent double charging.",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Purchase processed successfully"),
-            @ApiResponse(responseCode = "400", description = "Insufficient stock or invalid quantity"),
-            @ApiResponse(responseCode = "404", description = "Product not found")
-        }
-    )
-    @PostMapping("/{id}/purchase")
-    public ResponseEntity<Void> purchaseProduct(
-            @Parameter(description = "ID of the product to purchase")
-            @PathVariable @NonNull UUID id, 
-            @Parameter(description = "Quantity to purchase (minimum 1)")
-            @Valid @RequestBody PurchaseRequestDTO requestDTO) {
-        productService.purchaseProduct(id, requestDTO.getQuantity());
-        return ResponseEntity.ok().build();
-    }
+
 
     @Operation(
         summary = "Update an existing product",
@@ -138,5 +121,40 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable @NonNull UUID id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+        summary = "Purchase a product",
+        description = "Processes a purchase for the specified product. Uses an Idempotency-Key header to prevent duplicate transactions.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Purchase processed successfully"),
+            @ApiResponse(responseCode = "400", description = "Insufficient stock"),
+            @ApiResponse(responseCode = "404", description = "Product not found")
+        }
+    )
+    @PostMapping("/{id}/purchase")
+    public ResponseEntity<ResponseWrapper<String>> purchaseProduct(
+            @PathVariable @NonNull UUID id,
+            @RequestBody Map<String, Integer> request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        int quantity = request.getOrDefault("quantity", 1);
+        productService.purchaseProduct(id, quantity, idempotencyKey);
+        return ResponseEntity.ok(new ResponseWrapper<>("Purchase successful"));
+    }
+
+    @Operation(
+        summary = "Update product stock",
+        description = "Updates the physical stock level for a product. This endpoint bridges to the Inventory Service.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "Stock updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Product not found")
+        }
+    )
+    @PutMapping("/{id}/stock")
+    public ResponseEntity<ResponseWrapper<String>> updateStock(
+            @PathVariable @NonNull UUID id,
+            @RequestParam int quantity) {
+        productService.updateStock(id, quantity);
+        return ResponseEntity.ok(new ResponseWrapper<>("Stock updated successfully"));
     }
 }

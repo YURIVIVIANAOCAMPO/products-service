@@ -28,23 +28,28 @@ public class ProductService {
     private final InventoryClient inventoryClient;
 
     @Transactional
-    public void purchaseProduct(@NonNull UUID id, Integer quantity) {
+    public void purchaseProduct(@NonNull UUID id, Integer quantity, String idempotencyKey) {
         if (!productRepository.existsById(id)) {
             throw new ResourceNotFoundException("Product not found with id: " + id);
         }
         
-        // SKU is no longer needed for inventory calls as we use the UUID (id)
+        // Use provided idempotency key or generate one
+        String effectiveKey = (idempotencyKey != null) ? idempotencyKey : UUID.randomUUID().toString();
         
-        int availableStock = inventoryClient.getAvailableStock(id);
-        if (availableStock < quantity) {
-            throw new InsufficientStockException("Not enough stock available. Current stock: " + availableStock);
-        }
-        
-        String idempotencyKey = UUID.randomUUID().toString();
-        boolean success = inventoryClient.deductStock(id, quantity, idempotencyKey);
+        boolean success = inventoryClient.deductStock(id, quantity, effectiveKey);
         if (!success) {
             throw new InsufficientStockException("Failed to deduct stock for product: " + id);
         }
+    }
+
+    @Transactional
+    public void updateStock(@NonNull UUID id, Integer quantity) {
+        if (!productRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Product not found with id: " + id);
+        }
+        inventoryClient.initializeStock(id, quantity);
+        // Also update local status based on new stock
+        updateProductStatus(id, quantity);
     }
 
     @Transactional

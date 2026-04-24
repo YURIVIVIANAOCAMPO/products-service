@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -98,26 +97,24 @@ class ProductServiceTest {
 
     @Test
     void purchaseProduct_Success() {
-        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-        when(inventoryClient.getAvailableStock(productId)).thenReturn(10);
+        when(productRepository.existsById(productId)).thenReturn(true);
         when(inventoryClient.deductStock(eq(productId), eq(2), anyString())).thenReturn(true);
 
-        assertDoesNotThrow(() -> productService.purchaseProduct(productId, 2));
+        assertDoesNotThrow(() -> productService.purchaseProduct(productId, 2, "key-123"));
     }
 
     @Test
     void purchaseProduct_InsufficientStock_ThrowsException() {
-        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-        when(inventoryClient.getAvailableStock(productId)).thenReturn(1); // Only 1 available
+        when(productRepository.existsById(productId)).thenReturn(true);
+        when(inventoryClient.deductStock(eq(productId), eq(2), anyString())).thenReturn(false);
 
-        assertThrows(InsufficientStockException.class, () -> productService.purchaseProduct(productId, 2));
-        verify(inventoryClient, never()).deductStock(any(UUID.class), anyInt(), anyString());
+        assertThrows(InsufficientStockException.class, () -> productService.purchaseProduct(productId, 2, "key-124"));
     }
 
     @Test
     void purchaseProduct_ProductNotFound_ThrowsException() {
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+        when(productRepository.existsById(productId)).thenReturn(false);
 
-        assertThrows(ResourceNotFoundException.class, () -> productService.purchaseProduct(productId, 2));
+        assertThrows(ResourceNotFoundException.class, () -> productService.purchaseProduct(productId, 2, "key-125"));
     }
 }

@@ -33,7 +33,7 @@ public class InventoryController {
     @GetMapping("/{productId}")
     public ResponseEntity<Map<String, Object>> getStock(
             @Parameter(description = "UUID of the product to check", example = "550e8400-e29b-41d4-a716-446655440000")
-            @PathVariable UUID productId) {
+            @PathVariable @NonNull UUID productId) {
         Integer available = inventoryService.getAvailableStock(productId);
         return ResponseEntity.ok(Map.of("productId", productId, "available", available));
     }
