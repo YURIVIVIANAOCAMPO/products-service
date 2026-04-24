@@ -16,7 +16,7 @@ public class InventoryClient {
     private final RestClient restClient;
 
     public InventoryClient(@Value("${inventory.service.url:http://localhost:8081}") @NonNull String baseUrl,
-                           @Value("${inventory.service.api-key:inventory-secret-key}") String apiKey) {
+                           @Value("${security.api-key:inventory-secret-key}") String apiKey) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(2000);
         factory.setReadTimeout(2000);
