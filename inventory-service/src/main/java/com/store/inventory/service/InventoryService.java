@@ -42,8 +42,12 @@ public class InventoryService {
         inventoryRepository.save(java.util.Objects.requireNonNull(inventory));
         log.info("InventoryInitialized: Product {} initial stock set to {}", productId, inventory.getAvailable());
         
-        // Sync status back to Products Service
-        productsClient.syncStatus(productId, inventory.getAvailable());
+        // Sync status back to Products Service (Non-critical, don't fail the whole transaction)
+        try {
+            productsClient.syncStatus(productId, inventory.getAvailable());
+        } catch (Exception e) {
+            log.error("Failed to sync status to Products Service: {}", e.getMessage());
+        }
     }
 
     @Transactional
@@ -79,7 +83,11 @@ public class InventoryService {
         // 5. Log Event (Required by tech test)
         log.info("InventoryChanged: Product {} new available stock is {}", inventory.getProductId(), inventory.getAvailable());
         
-        // 6. Sync status back to Products Service
-        productsClient.syncStatus(java.util.Objects.requireNonNull(inventory.getProductId()), inventory.getAvailable());
+        // 6. Sync status back to Products Service (Non-critical)
+        try {
+            productsClient.syncStatus(java.util.Objects.requireNonNull(inventory.getProductId()), inventory.getAvailable());
+        } catch (Exception e) {
+            log.error("Failed to sync status after purchase: {}", e.getMessage());
+        }
     }
 }

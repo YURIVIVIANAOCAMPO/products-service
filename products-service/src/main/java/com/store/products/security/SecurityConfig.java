@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/**", "/error").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/products/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/products/*/purchase").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/products/*/sync-status").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
