@@ -28,7 +28,7 @@ public class InventoryClient {
 
         this.restClient = RestClient.builder()
                 .requestFactory(factory)
-                .baseUrl(sanitizedUrl)
+                .baseUrl(java.util.Objects.requireNonNull(sanitizedUrl))
                 .defaultHeader("x-api-key", apiKey)
                 .build();
     }
