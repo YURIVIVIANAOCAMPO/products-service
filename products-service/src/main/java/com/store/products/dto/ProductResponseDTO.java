@@ -22,4 +22,5 @@ public class ProductResponseDTO {
     private ProductStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Integer stock;
 }

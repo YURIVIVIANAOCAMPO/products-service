@@ -28,19 +28,21 @@ public class ProductService {
 
     @Transactional
     public void purchaseProduct(@NonNull UUID id, Integer quantity) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        if (!productRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Product not found with id: " + id);
+        }
         
-        String sku = java.util.Objects.requireNonNull(product.getSku(), "Product SKU cannot be null");
+        // SKU is no longer needed for inventory calls as we use the UUID (id)
         
-        int availableStock = inventoryClient.getAvailableStock(sku);
+        int availableStock = inventoryClient.getAvailableStock(id);
         if (availableStock < quantity) {
             throw new InsufficientStockException("Not enough stock available. Current stock: " + availableStock);
         }
         
-        boolean success = inventoryClient.deductStock(sku, quantity);
+        String idempotencyKey = UUID.randomUUID().toString();
+        boolean success = inventoryClient.deductStock(id, quantity, idempotencyKey);
         if (!success) {
-            throw new InsufficientStockException("Failed to deduct stock for product: " + product.getSku());
+            throw new InsufficientStockException("Failed to deduct stock for product: " + id);
         }
     }
 
@@ -58,13 +60,20 @@ public class ProductService {
     public ProductResponseDTO getProductById(@NonNull UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        return productMapper.toDTO(product);
+        ProductResponseDTO dto = productMapper.toDTO(product);
+        dto.setStock(inventoryClient.getAvailableStock(id));
+        return dto;
     }
 
     @Transactional(readOnly = true)
     public Page<ProductResponseDTO> listProducts(String search, com.store.products.entity.ProductStatus status, @NonNull Pageable pageable) {
         Page<Product> productPage = productRepository.findByFilters(status, search, pageable);
-        return productPage.map(productMapper::toDTO);
+        return productPage.map(product -> {
+            ProductResponseDTO dto = productMapper.toDTO(product);
+            UUID id = java.util.Objects.requireNonNull(product.getId(), "Product ID cannot be null");
+            dto.setStock(inventoryClient.getAvailableStock(id));
+            return dto;
+        });
     }
 
     @Transactional
@@ -73,7 +82,7 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
         // Check if SKU changed and if the new SKU is already taken
-        if (!product.getSku().equals(requestDTO.getSku())) {
+        if (requestDTO.getSku() != null && !requestDTO.getSku().equals(product.getSku())) {
             validateSkuUniqueness(requestDTO.getSku());
         }
 

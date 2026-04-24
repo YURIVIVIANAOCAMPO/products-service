@@ -7,6 +7,8 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import java.util.UUID;
+import java.util.Map;
 
 @Component
 public class InventoryClient {
@@ -14,7 +16,7 @@ public class InventoryClient {
     private final RestClient restClient;
 
     public InventoryClient(@Value("${inventory.service.url:http://localhost:8081}") @NonNull String baseUrl,
-                           @Value("${inventory.service.api-key:default-secret-key}") String apiKey) {
+                           @Value("${inventory.service.api-key:inventory-secret-key}") String apiKey) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(2000);
         factory.setReadTimeout(2000);
@@ -28,33 +30,40 @@ public class InventoryClient {
 
     @Retry(name = "inventoryService")
     @CircuitBreaker(name = "inventoryService", fallbackMethod = "getAvailableStockFallback")
-    public int getAvailableStock(@NonNull String sku) {
-        Integer stock = restClient.get()
-                .uri("/api/inventory/{sku}/stock", sku)
-                .retrieve()
-                .body(Integer.class);
-        return stock != null ? stock : 0;
+    public int getAvailableStock(@NonNull UUID productId) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restClient.get()
+                    .uri("/inventory/{productId}", productId)
+                    .retrieve()
+                    .body(Map.class);
+            
+            if (response != null && response.get("available") != null) {
+                return (Integer) response.get("available");
+            }
+        } catch (Exception e) {
+            return 0;
+        }
+        return 0;
     }
 
-    public int getAvailableStockFallback(String sku, Throwable t) {
+    public int getAvailableStockFallback(UUID productId, Throwable t) {
         return 0;
     }
 
     @Retry(name = "inventoryService")
     @CircuitBreaker(name = "inventoryService", fallbackMethod = "deductStockFallback")
-    public boolean deductStock(String sku, int quantity) {
+    public boolean deductStock(UUID productId, int quantity, String idempotencyKey) {
         restClient.post()
-                .uri("/api/inventory/deduct")
-                .body(new StockDeductionRequest(sku, quantity))
+                .uri("/inventory/purchases")
+                .header("Idempotency-Key", idempotencyKey)
+                .body(java.util.Objects.requireNonNull(Map.of("productId", productId, "quantity", quantity)))
                 .retrieve()
                 .toBodilessEntity();
         return true;
     }
 
-    public boolean deductStockFallback(String sku, int quantity, Throwable t) {
+    public boolean deductStockFallback(UUID productId, int quantity, String idempotencyKey, Throwable t) {
         return false;
     }
-
-    // Inner class for the request body
-    public record StockDeductionRequest(String sku, int quantity) {}
 }

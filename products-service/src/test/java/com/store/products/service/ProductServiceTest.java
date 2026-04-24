@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -99,8 +99,8 @@ class ProductServiceTest {
     @Test
     void purchaseProduct_Success() {
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-        when(inventoryClient.getAvailableStock("PROD-001")).thenReturn(10);
-        when(inventoryClient.deductStock("PROD-001", 2)).thenReturn(true);
+        when(inventoryClient.getAvailableStock(productId)).thenReturn(10);
+        when(inventoryClient.deductStock(eq(productId), eq(2), anyString())).thenReturn(true);
 
         assertDoesNotThrow(() -> productService.purchaseProduct(productId, 2));
     }
@@ -108,10 +108,10 @@ class ProductServiceTest {
     @Test
     void purchaseProduct_InsufficientStock_ThrowsException() {
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-        when(inventoryClient.getAvailableStock("PROD-001")).thenReturn(1); // Only 1 available
+        when(inventoryClient.getAvailableStock(productId)).thenReturn(1); // Only 1 available
 
         assertThrows(InsufficientStockException.class, () -> productService.purchaseProduct(productId, 2));
-        verify(inventoryClient, never()).deductStock(anyString(), anyInt());
+        verify(inventoryClient, never()).deductStock(any(UUID.class), anyInt(), anyString());
     }
 
     @Test

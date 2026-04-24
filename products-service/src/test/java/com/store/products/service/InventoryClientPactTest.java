@@ -16,17 +16,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SuppressWarnings("null")
 class InventoryClientPactTest {
 
+    private static final String PRODUCT_ID = "550e8400-e29b-41d4-a716-446655440000";
+
     @Pact(consumer = "products-service")
     public V4Pact createPactForStock(PactBuilder builder) {
         return builder.usingLegacyDsl()
-                .given("Product PROD-001 exists with stock 15")
+                .given("Product exists with stock 15")
                 .uponReceiving("A request to get available stock")
-                .path("/api/inventory/PROD-001/stock")
+                .path("/inventory/" + PRODUCT_ID)
                 .method("GET")
                 .willRespondWith()
                 .status(200)
                 .matchHeader("Content-Type", "application/json")
-                .body("15")
+                .body("{\"available\": 15}")
                 .toPact(V4Pact.class);
     }
 
@@ -34,7 +36,7 @@ class InventoryClientPactTest {
     @PactTestFor(pactMethod = "createPactForStock")
     void testGetAvailableStock(MockServer mockServer) {
         InventoryClient inventoryClient = new InventoryClient(mockServer.getUrl(), "test-api-key");
-        int stock = inventoryClient.getAvailableStock("PROD-001");
+        int stock = inventoryClient.getAvailableStock(java.util.UUID.fromString(PRODUCT_ID));
         assertEquals(15, stock);
     }
 }
