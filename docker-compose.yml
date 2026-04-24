@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # --- Products Service ---
+  products-db:
+    image: postgres:15-alpine
+    container_name: products-db
+    environment:
+      POSTGRES_DB: productdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d productdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  products-service:
+    build: ./products-service
+    container_name: products-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://products-db:5432/productdb
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      INVENTORY_SERVICE_URL: http://inventory-service:8081
+      INVENTORY_API_KEY: inventory-secret-key
+    depends_on:
+      products-db:
+        condition: service_healthy
+
+  # --- Inventory Service ---
+  inventory-db:
+    image: postgres:15-alpine
+    container_name: inventory-db
+    environment:
+      POSTGRES_DB: inventorydb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d inventorydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://inventory-db:5432/inventorydb
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      PRODUCTS_SERVICE_URL: http://products-service:8080
+      SECURITY_API_KEY: inventory-secret-key
+    depends_on:
+      inventory-db:
+        condition: service_healthy
