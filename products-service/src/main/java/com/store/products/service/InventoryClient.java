@@ -50,7 +50,7 @@ public class InventoryClient {
                 return (Integer) response.get("available");
             }
         } catch (Exception e) {
-            log.error("Failed to fetch stock for {}: {}", productId, e.getMessage());
+            log.error("CRITICAL: Failed to fetch stock for {}: {}", productId, e.getMessage());
         }
         return 0;
     }
