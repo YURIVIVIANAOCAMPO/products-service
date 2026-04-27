@@ -36,6 +36,6 @@ graph TD
 
 ### Componentes principales:
 1.  **Frontend Dashboard:** Aplicación SPA que consume los servicios.
-2.  **Products Microservice:** Orquestador del catálogo y seguridad.
+2.  **Products Microservice:** Catálogo de productos, autenticación JWT y exposición de APIs
 3.  **Inventory Microservice:** Especialista en lógica de almacén y concurrencia.
 4.  **Shared Database:** Instancia de PostgreSQL con esquemas separados gestionados por Flyway.
