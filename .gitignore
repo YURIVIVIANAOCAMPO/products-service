@@ -1,0 +1,7 @@
+### Visual Studio ###
+.vs/
+*.vsidx
+
+### Windows ###
+Thumbs.db
+Desktop.ini
